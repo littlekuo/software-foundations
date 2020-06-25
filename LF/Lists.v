@@ -391,7 +391,7 @@ Definition bag := natlist.
 Fixpoint count (v:nat) (s:bag) : nat :=
    match s with 
    | nil => O
-   | h :: t => match (eqb v h) with
+   | h :: t => match (Basics.eqb v h) with
                | true => 1 + (count v t)
                | _ => count v t
                end
@@ -455,7 +455,7 @@ Proof. simpl. reflexivity. Qed.
 Fixpoint remove_one (v:nat) (s:bag) : bag :=
    match s with
    | nil => nil
-   | h :: t => match (eqb h v) with
+   | h :: t => match (Basics.eqb h v) with
                | true => t
                | _ =>  h :: (remove_one v t)
                end
@@ -480,7 +480,7 @@ Proof. simpl. reflexivity. Qed.
 Fixpoint remove_all (v:nat) (s:bag) : bag  := 
    match s with
    | nil => nil
-   | h :: t => match (eqb h v) with
+   | h :: t => match (Basics.eqb h v) with
                | true => remove_all v t
                | _ =>  h :: (remove_all v t)
                end
@@ -529,7 +529,7 @@ Proof. simpl. reflexivity. Qed.
 Theorem bag_theorem: forall (v:nat) (l:bag), count v (add v l) = 1 + count v l.
 Proof.
   intros v l. 
-  assert (H: eqb v v = true). 
+  assert (H: Basics.eqb v v = true). 
   { induction v as [|v' IHv']. 
     - reflexivity. 
     - simpl. rewrite -> IHv'. reflexivity.
@@ -923,7 +923,7 @@ Fixpoint eqblist (l1 l2 : natlist) : bool :=
               end
    | h :: t => match l2 with
               | nil => false
-              | s :: z => match (eqb h s) with
+              | s :: z => match (Basics.eqb h s) with
                           | true => eqblist t z
                           | _  => false
                           end
@@ -1007,7 +1007,7 @@ Theorem bag_count_sum: forall (v : nat) (l s : bag), count v (sum l s) = count v
 Proof.
    intros v l s. induction l as [|n l' IHl'].
    - simpl.  reflexivity.
-   - simpl.  destruct (eqb v n) eqn:En'.
+   - simpl.  destruct (Basics.eqb v n) eqn:En'.
      { rewrite -> IHl' . rewrite -> plus_Sn_m. reflexivity. }
      { rewrite -> IHl' . reflexivity. }
   Qed. 

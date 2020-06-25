@@ -1294,7 +1294,7 @@ Proof. reflexivity. Qed.
 Example test_forallb_3 : forallb evenb [0;2;4;5] = false.
 Proof. reflexivity. Qed.
 
-Example test_forallb_4 : forallb (eqb 5) [] = true.
+Example test_forallb_4 : forallb (Basics.eqb 5) [] = true.
 Proof. reflexivity. Qed.
 
 Fixpoint existsb {X : Type} (test : X -> bool) (l : list X) : bool := 
@@ -1306,7 +1306,7 @@ Fixpoint existsb {X : Type} (test : X -> bool) (l : list X) : bool :=
                  end
    end.
 
-Example test_existsb_1 : existsb (eqb 5) [0;2;3;6] = false.
+Example test_existsb_1 : existsb (Basics.eqb 5) [0;2;3;6] = false.
 Proof. reflexivity. Qed.
 
 Example test_existsb_2 : existsb (andb true) [true;true;false] = true.
