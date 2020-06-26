@@ -1651,7 +1651,15 @@ Qed.
 (** **** Exercise: 2 stars, standard, recommended (reflect_iff)  *)
 Theorem reflect_iff : forall P b, reflect P b -> (P <-> b = true).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. split.
+  - intros. inversion H. 
+    + trivial.
+    + apply H1 in H0.   destruct H0. 
+  - intros.  inversion H.
+    + apply H1.
+    + rewrite -> H0 in H2. discriminate H2.
+Qed.
+
 (** [] *)
 
 (** The advantage of [reflect] over the normal "if and only if"
