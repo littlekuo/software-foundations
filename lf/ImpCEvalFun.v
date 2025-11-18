@@ -207,16 +207,21 @@ Proof. reflexivity. Qed.
    [X] (inclusive -- i.e., [1 + 2 + ... + X]) in the variable [Y].  Make
    sure your solution satisfies the test that follows. *)
 
-Definition pup_to_n : com
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Definition pup_to_n : com :=
+<{
+  Y := 0;
+  Z := X;
+  while 1 <= Z do
+    Y := Y + Z;
+    Z := Z - 1;
+    X := X - 1
+  end}>.
 
 Example pup_to_n_1 :
   test_ceval (X !-> 5) pup_to_n
   = Some (0, 15, 0).
-(* FILL IN HERE *) Admitted.
-(*
 Proof. reflexivity. Qed.
-*)
+
 (** [] *)
 
 (** **** Exercise: 2 stars, standard, optional (peven)
@@ -297,9 +302,71 @@ Proof.
     defined value should look the same as for induction, except that
     there is no induction hypothesis.)  Make your proof communicate
     the main ideas to a human reader; do not simply transcribe the
-    steps of the formal proof. *)
+    steps of the formal proof. 
 
-(* FILL IN HERE *)
+
+Theorem: For any command c, initial state st, and final state st', 
+ if there exists a step-bound i such that the small-step evaluator ceval_step terminates (ceval_step st c i = Some st'), 
+ then the big-step evaluator => also terminates with the same result (st =[ c ]=> st').
+
+Proof: We proof it by induction on the step-bound i.
+
+1. Base Case: i = 0
+Analysis: By the definition of ceval_step, when i is 0, it always returns None.
+Conclusion: The premise None = Some st' is a contradiction. So it holds vacuously.
+
+2. Inductive Step: i = S i' 
+Inductive Hypothesis (IH): 
+  for any c_sub, st_a, st_b, if ceval_step st_a c_sub i' = Some st_b, then st_a =[ c_sub ]=> st_b.
+
+To show this, we perform a case analysis on the structure of the command c:
+
+2.1 Case: c = skip, the definition of ceval_step for skip is to immediately return Some st. 
+Thus, our premise implies st' = st. This directly corresponds to the big-step rule E_Skip, 
+which states st =[ skip ]=> st.
+
+2.2 Case: c = x := a, The definition of ceval_step for assignment is to immediately return Some (x !-> aeval st a; st). 
+Thus, our premise implies st' = (x !-> aeval st a; st). This directly corresponds to the big-step rule E_Asgn, 
+which states st =[ x := a ]=> (x !-> aeval st a; st).
+
+2.3 Case: c = c1 ; c2 (Sequence), For ceval_step to successfully evaluate c1 ; c2 in S i' steps, it must:
+ (1)ceval_step st c1 i' = Some s for some intermediate state s and 
+ (2)ceval_step s c2 i' = Some st'
+
+By applying our Inductive Hypothesis (IH) to both (1) and (2), we get:
+From (1): st =[ c1 ]=> s
+From (2): s =[ c2 ]=> st'
+The big-step rule E_Seq uses these two premises to conclude st =[ c1 ; c2 ]=> st'.
+
+2.4 Case: c = if b then c1 else c2, ceval_step first evaluates the boolean b.
+If beval st b = true: 
+  The ceval_step definition simplifies, requiring ceval_step st c1 i' = Some st'. 
+  By the IH, this implies st =[ c1 ]=> st'. This is exactly the premise needed for the E_IfTrue 
+  rule to conclude st =[ if b then c1 else c2  ]=> st'.
+If beval st b = false: 
+  The ceval_step definition simplifies, requiring ceval_step st c2 i' = Some st'. 
+  By the IH, this implies st =[ c2 ]=> st'. This is exactly the premise needed for the E_IfFalse 
+  rule to conclude st =[ if b then c1 else c2 ]=> st'.
+
+2.5 Case: c = while b do c_body, ceval_step first evaluates the boolean b.
+If beval st b = false: ceval_step immediately terminates, returning Some st. 
+Thus, our premise implies st' = st. This corresponds perfectly to the E_WhileFalse rule.
+
+If beval st b = true: This is the key recursive case. 
+
+For ceval_step to terminate, it must:
+Successfully evaluate the loop body c_body from st within i' steps, 
+  yielding an intermediate state s. (i.e., ceval_step st c_body i' = Some s)
+Successfully evaluate the entire while loop again from s within i' steps, 
+  yielding the final state st'. (i.e., ceval_step s (while b do c_body) i' = Some st')
+
+By applying our Inductive Hypothesis (IH) to both (1) and (2), we get:
+From (1): st =[ c_body ]=> s
+From (2): s =[ while b do c_body ]=> st'
+These are exactly the three premises required by the E_WhileTrue rule to conclude 
+st =[ while... ]=> st'.
+
+*)
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_ceval_step__ceval_inf : option (nat*string) := None.
@@ -360,7 +427,32 @@ Theorem ceval__ceval_step: forall c st st',
 Proof.
   intros c st st' Hce.
   induction Hce.
-  (* FILL IN HERE *) Admitted.
+  - (* E_Skip *)
+    exists 1. simpl. reflexivity.
+  - exists 1. simpl. rewrite -> H. reflexivity.
+  - (* E_Seq *)
+    destruct IHHce1 as [i1 Hi1].
+    destruct IHHce2 as [i2 Hi2].
+    exists (1 + i1 + i2).
+    apply ceval_step_more with (i2 := i1 + i2) in Hi1; try lia.
+    apply ceval_step_more with (i2 := i1 + i2) in Hi2; try lia.
+    simpl. rewrite -> Hi1. apply Hi2.
+  - destruct IHHce as [i Hi].
+    exists (1 + i).
+    simpl. rewrite -> H. apply Hi.
+  - destruct IHHce as [i Hi].
+    exists (1 + i). simpl. rewrite -> H. apply Hi.
+  - exists 1. simpl. rewrite -> H. reflexivity.
+  - destruct IHHce1 as [i1 Hi1].
+    destruct IHHce2 as [i2 Hi2].
+    exists (1 + i1 + i2).
+    simpl. rewrite -> H.
+    apply ceval_step_more with (i2 := i1 + i2) in Hi1; try lia.
+    rewrite -> Hi1. 
+    apply ceval_step_more with (i2 := i1 + i2) in Hi2; try lia.
+    apply Hi2.
+Qed. 
+
 (** [] *)
 
 Theorem ceval_and_ceval_step_coincide: forall c st st',
